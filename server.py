@@ -1,60 +1,43 @@
-'''
-Server will be receiving connection from 
-client 
-'''
-
-import socket
+import socket 
 import threading
-import time
+
+HEADER = 64
+PORT = 5050
+SERVER = socket.gethostbyname(socket.gethostname())
+ADDR = (SERVER, PORT)
+FORMAT = 'utf-8'
+DISCONNECT_MESSAGE = "!DISCONNECT"
+
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind(ADDR)
+
+def handle_client(conn, addr):
+    print(f"[NEW CONNECTION] {addr} connected.")
+
+    connected = True
+    while connected:
+        msg_length = conn.recv(HEADER).decode(FORMAT)
+        if msg_length:
+            msg_length = int(msg_length)
+            msg = conn.recv(msg_length).decode(FORMAT)
+            if msg == DISCONNECT_MESSAGE:
+                connected = False
+
+            print(f"[{addr}] {msg}")
+            conn.send("Msg received".encode(FORMAT))
+
+    conn.close()
+        
+
+def start():
+    server.listen()
+    print(f"[LISTENING] Server is listening on {SERVER}")
+    while True:
+        conn, addr = server.accept()
+        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        thread.start()
+        print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
 
 
-class Server:
-	#-------Creating node for TCP communication protocol--------
-	server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	#------Default Local host--------
-	host = "127.0.0.1"
-	#If you want to send over wifi replace host with your IP address
-	port = 5050
-	#Select random port except those ones set for default functions
-
-
-
-	def __init__(self):
-		server_config = (self.host, self.port)
-		self.server.bind(server_config)
-		self.server.listen(5)
-
-		#---------Accepting connection from client---------
-
-		self.clientsocket, self.addr = self.server.accept()
-		print("Get connecting from ", self.addr)
-
-
-	#--------chatting function-----------
-
-	def receive_sms(self):
-		''' Receiving connection from the client'''
-		try:
-			while True:	
-				data = self.clientsocket.recv(1024).decode()
-				time.sleep(0.001)
-				print(data)
-		except Exception as ex:
-			print("The below error have occured please checkout")
-			print(ex)
-
-	def chat(self):
-		self.Receiving_ciao = threading.Thread(target = self.receive_sms)
-		self.Receiving_ciao.daemon = True
-		self.Receiving_ciao.start()
-		while True:
-			server_message = input()
-			server_message = "\nserver:{}\n".format(server_message)
-			self.clientsocket.send(server_message.encode())
-
-
-if __name__ =='__main__':
-	Server_m = Server()
-	Server_m.chat()
-	Server_m.Receiving_ciao.join()
-	server.close()
+print("[STARTING] server is starting...")
+start()
