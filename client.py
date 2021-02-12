@@ -23,6 +23,9 @@ send("Hello World!")
 input()
 send("Hello Everyone!")
 input()
-send("Hello Tim!")
+send("Hello Mate!")
 
 send(DISCONNECT_MESSAGE)
+
+# run python server.py 
+# then run python client.py
